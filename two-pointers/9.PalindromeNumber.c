@@ -1,8 +1,8 @@
 #include <math.h>
 bool isPalindrome(int x) {
-    if (x < 0) {
-        return false;
-    }
+    if (x < 0)  return false;
+    if (x < 10) return true;
+    
     int base = 10;
     long left = (long)pow(base, (int)log10(x));
     long right = base;
