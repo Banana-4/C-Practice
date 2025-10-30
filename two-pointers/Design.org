@@ -1,0 +1,79 @@
+*** 9. Palindrome Number
+#+DATE: <2025-10-30 Thu>
+**** Problem:
+For a number x, return true if it is a palindrom else false.
+**** Model
+Structures that make this world are integers in range -2**31 <= x <= 2**31 - 1.
+A integer is sequence of digits, defined by the frequency of digits at individual positions of each digit.
+***** The rules in this system are:
+1. Each number is stored in memory as a value, as a sequence of bits.
+2. We can not accsess indivdual digits of the number, only the whole number.
+3. Math rules apply.
+***** Shapes of integers:
+1. Only 1 digit, that is always a palindrom.
+2. number of digits > 1, this cases need to be checked if they are palindroms, this numbers can be made from only 1 digit or lot of repeating, none repeating digits.
+The shape of a number only matters if it has only one digit, it is a special case.
+3. A negative number has '-' sign in front of it, so it can never be a palindrom.
+   
+***** How to describe a digits position in a number:
+Each digit position in a base 10 system, can be represented by a power of 10, the right most position is 10**0, the left most is 10**(log10(number)). so a digit d in number n position can be expresed as 10**i where i is a count of digits from right starting from 0, range is: 0 <= i <= log10(n).
+
+**** Solution:
+If a number is less then 0 the number is not a palindrom
+Use two pointers and compare the left and right side, if they are not equal then the number is not a palindrom. If left and right meet in the middle the number is a palindrom.
+***** How to initilize left and right pointers?
+Left is by definition pow(10, log10(number)).
+Right number is just 10.
+***** How to move the pointers?
+Left pointer needs to move right, right digit has position that is a less power of 10, to move left /= 10.
+Right pointer moves left, the position to the left has a higher power of 10, to  move right *= 10.
+***** Using the position to view digits?
+Left digit is number / left, this gives the digits leftmost digit only if it is the first digit. That is true for the first digit in the number, but when left moves right then i dont get a digit at left position i get all the previous digits too. The solution is to do number % left to remove the previous digit.
+Right digit is number % right, it has the same problem as the other one, i need to remove the last digit from the number so i wont get all the previous digit. To remove the last digit i can do this number / right.
+From this i can conclude that at each iteration i need to remove the left and right digit from the number.
+***** When to stop?
+The algo needs to stop when left meets right, when left and right positon are equal or when right passes left.
+This happens when the number loses all its digits and equals 0.
+***** Conclusion:
+I need to reduce the number to zero, while removing left and right digits to return true, or find a left right pair that is not equal to return false.
+Initilaze left and right, loop while the number > 0 and left_digit == right_digit. left position is changing, left needs to reduce by 2 position, right positon stays the same because the number is reducing
+***** Pseudo code:
+#+BEGIN_SRC txt
+if number < 0
+  return false
+setting up the algo
+base = 10
+left = pow(base, log10(num))
+right = base
+while number != 0
+   left-digit = number / left
+   right-digit = number % right
+   number = (number % left) / right
+   left /= base*base
+   if left-digit != right-digit
+      return false
+return true
+#+END_SRC
+***** Code:
+#+BEGIN_SRC c
+#include <math.h>
+bool isPalindrome(int x) {
+    if (x < 0) {
+        return false;
+    }
+    int base = 10;
+    long left = (long)pow(base, (int)log10(x));
+    long right = base;
+
+    int left_dig, right_dig; 
+    while (x) {
+        left_dig = x / left;
+        right_dig = x % base;
+        x = (x % left) / right;
+        if (left_dig != right_dig) return false;
+        left /= 100;
+    }
+    return true;
+}
+#+END_SRC
+
