@@ -37,10 +37,13 @@ This happens when the number loses all its digits and equals 0.
 ***** Conclusion:
 I need to reduce the number to zero, while removing left and right digits to return true, or find a left right pair that is not equal to return false.
 Initilaze left and right, loop while the number > 0 and left_digit == right_digit. left position is changing, left needs to reduce by 2 position, right positon stays the same because the number is reducing
+Special edge case because of log10. when x == 0 the log10 is undefined, edge case two for 0<=x<10 the result is always true.
 ***** Pseudo code:
 #+BEGIN_SRC txt
 if number < 0
   return false
+if number < 10   
+   return true
 setting up the algo
 base = 10
 left = pow(base, log10(num))
@@ -58,9 +61,8 @@ return true
 #+BEGIN_SRC c
 #include <math.h>
 bool isPalindrome(int x) {
-    if (x < 0) {
-        return false;
-    }
+    if (x < 0) return false; 
+    if (x < 10) return true;
     int base = 10;
     long left = (long)pow(base, (int)log10(x));
     long right = base;
