@@ -1,0 +1,34 @@
+* 26. Remove Duplicates from Sorted Array
+
+** Problem:
+Remove duplicate elemnts in place from a sorted list, return the numbe of unique elements k, the first k elemnts should contain the unique numbers in sorted order, elements beyond k - 1 can be ignored.
+Compres the list by removing duplicates, keeping the relative order of numbers and moving the numbers 1 position back.
+*** The world:
+**** Structure that exsist in this world:
+A list of sorted numbers.  
+**** The laws of the world are:
+- Arrays laws,
+- When the array has duplicates, The numbers are moved that the beging of the array holds only unique sorted elements.
+
+**** Arrays shapes of interest:
+- empty - return 0.
+- no duplicates - return len(array).
+- 1,1,2,3,4,5 - by the law 1,2,3,4,5,5 return len(array) - 1.
+- 1,2,3,3,4,5,6,6,7,8 - by the law 1,2,3,4,5,6,7,8,7,8 return len(array) - 2.
+- 1,1,2,2,3,3 - by the law 1,2,3,2,3,3 return len(array) - 3.
+- 1,1,1,1,1,1,1 - by the law array stays the same, return 1.
+
+*** Invariant:
+The law, while traversing the array, the duplicates are counted, and each element is copied to current position - count_of_duplicates.
+
+** Solution:
+Start counting at 0, traverse the array from start to end, if current equals previous increase count by 1,  copy element to position - count.
+
+*** Pseudocode:
+count = 0
+for i = 0; i < len(nums) ++i
+        if i > 0 and nums[i] == nums[i - 1]
+                count += 1
+        nums[i - count] = nums[i]
+return len(nums) - count
+
