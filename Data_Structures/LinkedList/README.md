@@ -1,104 +1,125 @@
 # Linked List
+DATE: 23-12-2025
 
-## Goal:
-A practice project for C programing and system design.
-The goal is to design a data storing system (Linked List), that:
-1. Stores sequential data.
-2. It is made from a chain of nodes, links
-3. The node knows only what the data is and what is the next node in sequence
-4. Any amount of data can be stored, only if ther is enough memory.
-5. Safe to use.
+## What is it?
 
+Linked List is a memory managment subsystem that manages disjointed memory blocks by arranging them into a sequence.
+That allows storing arbitary amounts of data, and provides constant time end points insertion, deletion and data accsess.
 
-## Use cases:
-This data structure is for my personal use. I intend to use it in my projects, as a base for other data structures example stack.
-For a system that needs to work with collections of data of unknow sizes and that uses as least memory as posbile, a dynamic array uses double memory when it grows, both for the new array and inside the grow function.
-For fast end point accses, modifications, creation and removal.
-The user wants to use only a pointer to a linked list without any knowledge of nodes or how the operations work.
+## Terms:
 
-## Requerments - Feauters:
-0. The size of the list should always be known and accsesd in O(1).
-1. End point operation should be done in constant time.
-2. Memory use should not be much greater then the memory needed to store the data.
-3. Liner traversel.
-4. Support of removing and inserting elements at any position in the sequence, linear time.
-5. The travelser will be done using a iterator with a next method and a value method that returns the data.
-6. Work only with integer type.
-7. destruction is linear, each node needs to be destroyed.
+1. Node - a single memory block.
+2. Head - the first node of a sequence.
+3. Tail - the last node of a sequence.
+4. Iterator - a object used in traversing the list in sequential order, by passing it to a function that moves the iterator to the next node in sequence.
 
-## System Description:
+## Structure of The Linked List:
 
-### Main idea:
-A Linked list is a system for storing sequential data. The system uses a chain of nodes to create a sequence from non-contiguous memory. That is achived by nodes having a pointer to the next node address.
-Having such a system, gives the abilty to store unknow number of elements in the collection, that is only limited by the amount of memory avaliable to the system. The tradeoff is that data can be accsess only in sequence and a double amount of memory needed to store the data. In turn using the data at the end points, adding and removing nodes to ends is O(1).
+Linked List is a sequence of nodes that are linked by pointers.
 
-## How the system operates:
+A list stores:
+    1. the head.
+    2. the tail.
+    3. the length.
 
-The data enters the Linked List through the append and add methods.
-The data is inside a node, that is inserted to position in the chain of nodes that a list manages.
-The list stores the first and last node, head and tail, and the length of the list.
-Traversing the list is done using a iterator. The iterator is a struct that contains a node from the list, and can only show the stored data using the list_value() or move to the next node by passing it to the list_next().
-Using iterator is the best option, other options would be to complex to use, store the current node in the linkelist, use a function to move it forward, if there is a need to start oveer the current node needs to be reseted.
+A NULL pointer is used as a terminator to signal the end of the sequence.
 
-## Tech:
-C programing language:
-    1. Pointers.
-    2. Structs.
+## Structure of a node:
 
-## Modules:
-Structure:
-LinkedList - struct that has two nodes, the start and end node, and a varaible for the size.
-Node - struct of a pointer to the next node in sequence and holds the data value.
-Iterator - a struct that is used to iterate over the list. It contains a node pointer, that is set to the head on createon.
+A node is a plain data structure that stores:
+    1. Value, the data that is stored in the list.
+    2. Pointer to the next node in the sequence.
 
-Operations:
-Bool values are used to signal the succses or failure of a operation.
-LinkedList* build_list() - returns a empty LinkedList struct, both pointers are set to null
-LinkedList* build_list_array(Array a) - creates a linked list from a array.
-Both constructors return null on error.
+## Supported Operations:
+    0. Building - creates a new Linked List.
+    1. Insertion - inserts a new node at any point in the sequence.
+    2. Iteration - moves through the nodes one by one in sequence
+    3. Removal - removing a node from the list
+    4. Appending - adding to the end
+    5. Pushing - adding to the front
+    7. Pop - removing from the start
 
-int len_list(LinkedList* l) - the legth of the list
+## Invariants:
+    1. A Linked List operation removal and insertion will never break the node sequence.
+    2. NULL pointer is only used as a terminator to signal the end of the list.
+    3. The list will not have a node without data
+    4. Each node in the list points to the next node except the last it points to null.
+    5. The head and tail nodes are null only if the list is empty.
+    6. A Node will only by linked to its neighbours in sequence, this Data Structure is not a graph or a tree.
+    7. A empty list can be only used to insert a node at start.
+    8. The state where a part of the list is left dangling, without a pointer that leads to it, will not be reached.
+    9. A null node will never be used in iterations.
 
-Iterator* iterator(LinkedList* l) - returns Iterator pointer that holds the head of the list.
-bool append_list(LinkedList* l, int n) - creates a new node with n and adds it to the end of the list.
-bool add_list(LinkedList* l, int n) - adds a node that holds n to the front of the list.
-bool remove_list(LinkedList* l, unsigned p, int* out) - removes a node at position p and returns the stored data at p.
-bool insert_list(LinkedList* l, unsigned p, int n) - inserts a new node at position p.
-Iterator* next(Iterator* i) - moves the iterator forward, returns null if it gets beyond the end.
-bool value(Iterator* i, int* out) - output the value of the node, returns false if the iterator is null.
-
-void destroy_iterator(Iterator* i) - free the memory used by the iterator.
-void destroy_list(LinkedList* l) - free the used memory, linear time.
-
-## File organization:
+## File Organization:
+```
 /LinkedList
+    /include
+        LinkedList.h
     /src
-        LinkedList.c - contains all the methods and struct defenitions.
-    LinkedList.h - provides only the interface.
+        linkedList.c
+    /test
+        brackets.c
     README.md
 
-## Functions Documentation:
+```
+
+## Tech Stack:
+
+C programing language
+
+## Impplementation:
+LinkedList that stores only int.
+
+## Structs:
+
+```
+Node:
+    int data;
+    Node* next;
+
+LinkedList:
+    Node* head;
+    Node* tail
+    unsigned length;
+
+LinkedListIterator:
+    Node* current;
 
 
+```
+## Error Enum:
+```
+ERROR {
+  index_out_of_range,
+  empty_list,
+  null_node,
+  memory_fail
+}
+```
+## Interface:
 
-## Tests:
-1. Create a empty list
-2. Create a list from a array
-3. Create a list from a empty array.
-4. add to front
-5. append to end
-6. remove front and end.
-7. remove a elemnt in the range of the list.
-8. try to remove a  element out of bonds.
-9. insert a item in the list.
-10. insert a item out of bonds.
-11. destroy a list
-12. destroy a empty list.
-13. create iterator
-14. iterate to the end and print each item.
-15. try to go beyond the end of the list and use the value.
-16. destroy a iterator.
+```
+typedef LinkedList - the linked list struct
+typedef ListIterator - the iterator struct
+enum ERROR - the signals for various errors.
 
-## Future improvments:
-1. signal errors, a system that will track the state of the list, if a memory allocation faild, out of bonds.
-2. Allow the list to hold any data type.
+LinkedList* build_linkedList() - creates the LinkedList struct and sets the head and tail to point to null, length to zero.
+
+int peekHead(LinkedList* l, ERROR* signal) - returns the value stored at the head node
+int peekTail(LinkedList* l, ERROR* signal) - return the value stored in the tail node
+void insertList(LinkedList* l, int n, int pos, ERROR* signal) - inserts a node at position p, only if p is in the range [0, length].
+void removeList(LinkedList* l, int pos, ERROR signal) - removes the node at position p if p is in the list range else signals a error
+void pushList(LinkedList* l, int n, ERROR* signal) - adds a new node to the start
+void appendList(LinkedList* l, int n, ERROR* signal) - adds a new node to the end, if the list is empty adds to the start.
+int peekFrontList(LinkedList* l, ERROR* signal) - returns the value at the head
+int peekBackList(LinkedList* l, ERROR* signal) - returns the value at the tail.
+void destroyList(LinkedList* l, ERROR* signal) - frees the used memory.
+int popList(LinkedList* l, ERROR* signal) - removes the first node and returns the stored value.
+
+IteratorList* iteratorList(LinkedList* l, ERROR* signal) - creates a iterator
+void nextNode(IteratorList* iter, ERROR* signal) - moves the iterator to the next node in sequence
+int valueNode(IteratorList* iter, ERROR* signal) - returns the value of the current node
+
+```
+
+

@@ -1,6 +1,5 @@
-#include "../LinkedList.h"
-#include <stdlib.h>
-// data
+#include "../include/LinkedList.h"
+
 typedef struct Node {
   struct Node *next;
   int value;
@@ -12,158 +11,233 @@ struct LinkedList  {
   Node* tail;
 };
 
-typedef struct ListIterator {
+typedef struct IteratorList {
   Node *node;
 } ListIterator;
 
 
-Node *build_node(int n) {
-  Node *node = (Node*)malloc(sizeof(Node));
-  if (!node)
+LinkedList *buildLinkedList(ERROR* signal) {
+  LinkedList *list = malloc(sizeof(LinkedList));
+  if (!list) {
+    *signal = memory_fail;
     return NULL;
-  node->value = n;
-  node->next = NULL;
-  return node;
-}
-
-LinkedList *build_list() {
-  LinkedList *l = (LinkedList *)malloc(sizeof(LinkedList));
-  if(!l) return NULL;
-  l->len = 0;
-  return l;
   }
-
-LinkedList *build_list_array(Array *a) {
-  LinkedList *list = build_list();
-  ArrayIterator *iter = array_iterator(a);
-  while (array_next(iter)) {
-    if (!list_append(array_value(iter))) {
-      destroy_list(list);
-      return NULL;
-    }
-  }
+  *signal = no_error;
   return list;
 }
 
-void destroy_list(LinkedList *l) {
-  ListIterator *iter = list_iterator(l);
-  while (list_next(iter)) {
-    free(iter->node);
+int* peekFront(LinkedList *l, ERROR *signal) {
+  if (!l) {
+    *signal = no_list;
+    return NULL;
   }
-  destroy_list_iterator(iter);
-  free(l);
+  if (l->len == 0) {
+    *signal = empty_list;
+    return NULL;
+  }
+  *signal = no_error;
+  return &l->head->value;
 }
 
+int* peekBack(LinkedList *l, ERROR *signal) {
+  if (!l) {
+    *signal = no_list;
+    return NULL;
+  }
+  if (l->len == 0) {
+    *signal = empty_list;
+    return NULL;
+  }
+  *signal = no_error;
+  return &l->tail->value;
+}
 
-unsigned len_list(LinkedList *l) { return l->len; }
+int *atList(LinkedList *l, unsigned pos, ERROR *signal) {
+  if (!l) {
+    *signal = no_list;
+    return NULL;
+  }
+  if (l->len == 0) {
+    *signal = empty_list;
+    return NULL;
+  }
 
+  if (pos > l->len) {
+    *signal = index_out_of_range;
+    return NULL;
+  }
+  Node *trav = l->head;
+  while (pos--) {
+    trav = trav->next;
+  }
+  *signal = no_error;
+  return &trav->value;
+}
 
-ListIterator *list_iterator(LinkedList *l) {
-  if(!l || !l->len) return NULL;
-  ListIterator *iter = (ListIterator*)malloc(sizeof(ListIterator));
-  if (!iter) return NULL;
+void insertList(LinkedList *l, unsigned int pos, int n, ERROR *signal) {
+  if (!l) {
+    *signal = no_list;
+    return;
+  }
+  if (pos > l->len) {
+    *signal = index_out_of_range;
+    return;
+  }
+  Node *newNode = (Node *)malloc(sizeof(Node));
+  newNode->value = n;
+  Node *trav = l->head;
+  Node* prev = l->head;
+  while (pos--) {
+    prev = trav;
+    trav = trav->next;
+  }
+  if (prev == trav) {
+    newNode->next = trav;
+    l->head = newNode;
+  } else if (trav == NULL && prev == NULL) {
+    l->head = l->tail = newNode;
+    newNode->next = NULL;
+  } else if (trav == NULL) {
+    prev->next = newNode;
+    newNode->next = NULL;
+    l->tail = newNode;
+  } else {
+    prev->next = newNode;
+    newNode->next = trav;
+  }
+  *signal = no_error;
+  ++l->len;
+}
+
+void removeList(LinkedList *l, unsigned int pos, ERROR *signal) {
+  if (!l) {
+    *signal = no_list;
+    return;
+  }
+  if (l->len == 0) {
+    *signal = empty_list;
+    return;
+  }
+
+  if (pos > l->len) {
+    *signal = index_out_of_range;
+    return;
+  }
+  Node *trav = l->head;
+  Node *prev = l->head;
+  while (pos--) {
+    prev = trav;
+    trav = trav->next;
+  }
+  if (prev == trav) {
+    free(l->head);
+    l->head = l->tail = NULL;
+  } else if (trav == NULL) {
+    prev->next = NULL;
+    free(l->tail);
+  } else {
+    prev->next = trav->next;
+    trav->next = NULL;
+    free(trav);
+  }
+  --l->len;
+  *signal = no_error;
+}
+
+void pushList(LinkedList *l, int n, ERROR *signal) {
+  insertList(l, 0, n, signal);
+}
+
+void appendList(LinkedList *l, int n, ERROR *signal) {
+  insertList(l, l->len, n, signal);
+}
+
+int popList(LinkedList *l, ERROR *signal) {
+  if (!l) {
+    *signal = no_list;
+    return 0;
+  }
+  if (l->len == 0) {
+    *signal = empty_list;
+    return 0;
+  }
+  int val = l->head->value;
+  Node *old = l->head;
+  l->head = l->head->next;
+  free(old);
+  --l->len;
+  *signal = no_error;
+  return val;
+}
+
+bool emptyList(LinkedList *l, ERROR* signal) {
+  if (!l) {
+    *signal = no_list;
+  }
+  *signal = no_error;
+  return l->len == 0;
+}
+
+void destroyList(LinkedList *l, ERROR *signal) {
+  if (!l) {
+    *signal = no_list;
+    return;
+  }
+  if (l->len == 0) {
+    free(l);
+    return;
+  }
+  Node *trav = l->head;
+  Node* next;
+  while (trav) {
+    next = trav->next;
+    free(trav);
+    trav = next;
+  }
+  *signal = no_error;
+}
+
+IteratorList *iteratorList(LinkedList *l, ERROR* signal) {
+  if (!l) {
+    *signal = no_list;
+    return NULL;
+  }
+  if (l->len == 0) {
+    *signal = empty_list;
+    return NULL;
+  }
+  IteratorList *iter = (IteratorList *)malloc(sizeof(IteratorList));
+  if (!iter) {
+    *signal = memory_fail;
+    return NULL;
+  }
   iter->node = l->head;
+  *signal = no_error;
   return iter;
 }
 
-bool list_next(ListIterator *i) {
-  Node* next = i->node->next;
-  if (next) {
-    i->node = next;
-    return true;
+void nextNode(IteratorList *iter, ERROR *signal) {
+  if (!iter) {
+    *signal = null_iter;
+    return;
   }
-  destroy_list_iterator(i);
-  return false;
+  if (!iter->node) {
+    *signal = end_of_list;
+    return;
+  }
+  iter->node = iter->node->next;
+  *signal = no_error;
 }
 
-bool list_value(ListIterator *i, int *out) {
-  if (!i)
-    return false;
-  *out = i->node->value;
-  return true;
-}
-
-void destroy_list_iterator(ListIterator *i) {
-  free(i);
-}
-
-bool append_list(LinkedList *l, int n) {
-  if (!l) return false;
-
-  Node *node = build_node(n);
-  if(!node) return false;
-
-  if (l->tail) {
-    l->tail->next = node;
-    l->tail = node;
-  } else {
-    l->tail = l->head = node;
+int* valueNode(IteratorList *iter, ERROR *signal) {
+  if (!iter) {
+    *signal = null_iter;
+    return NULL;
   }
-  l->len = l->len + 1;
-  return true;
+  if (iter->node == NULL) {
+    *signal = end_of_list;
+    return NULL;
+  }
+  *signal = no_error;
+  return &iter->node->value;
 }
-
-bool add_list(LinkedList *l, int n) {
-  if (!l) return false;
-
-  Node *node = build_node(n);
-  if (!node) return false;
-
-  if (l->head) {
-    node->next = l->head;
-    l->head = node;
-  } else {
-    l->tail = l->head = node;
-  }
-  l->len = l->len + 1;
-  return true;
-}
-
-bool remove_list(LinkedList *l, unsigned int p, int *out) {
-  if (!l || p >= l->len) return false;
-  if (p == 0) {
-    l->head = l->head->next;
-  } else {
-    Node *prev = NULL;
-    ListIterator *iter = list_iterator(l);
-    while (p--) {
-      prev = iter->node;
-      list_next(iter);
-    }
-    *out = list_value(iter);
-    prev->next = iter->node->next;
-    iter->node->next = NULL;
-    free(iter->node);
-    destroy_list_iterator(iter);
-  }
-  l->len = l->len - 1;
-  return true;
-}
-
-bool insert_list(LinkedList *l, unsigned p, int n) {
-  if (!l || p >= l->len)
-    return false;
-  if (p == 0) {
-    return add_list(l, n);
-  }
-  if (p == l->len - 1) {
-    return append_list(l, n);
-  }
-  ListIterator *iter = list_iterator(l);
-  if (!iter) return false;
-
-  Node *node = build_node(n);
-  if (!node) return false;
-  Node *prev = NULL;
-  while (p--) {
-    prev = iter->node;
-    list_next(iter);
-  }
-  prev->next = node;
-  node->next = iter->node;
-  destroy_list_iterator(iter);
-  l->len = l->len + 1;
-  return true;
-}
-
-
