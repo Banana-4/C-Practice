@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include "memory.h"
 #define MAXOP 20 /* max size of operand, operator */
 #define NUMBER '0' /* signal that number found */
 #define TOOBIG '9' /* signal that string is too big */
 #define VAR '$'
-#define var_VAL '*'
 
+//  RPN for variables is var a 12, is a = 12, a letter without a var means get the value of the var.
 main() /* reverse Polish desk calculator */
 {
   int type;
@@ -13,15 +14,20 @@ main() /* reverse Polish desk calculator */
 
   while ((type = getop(s, MAXOP)) != EOF)
     switch (type) {
-
     case NUMBER:
         push(atof(s));
         break;
     case 'a' ... 'z':
-		if (getop(s, MAXOP) == '=') {
-			
+		if (get_var(type, &op2))  {
+			push(op2);
+		} else {
+			printf("Variable %c not declared.\n", type);
 		}
-		push(get_var(type, s));
+		break;
+	case VAR:
+		char letter = getop(s, MAXOP);
+		getop(s,MAXOP);
+		store_val(letter, atof(s));
 		break;
     case '+':
         push(pop() + pop());
@@ -31,7 +37,11 @@ main() /* reverse Polish desk calculator */
         break;
     case '-':
         op2 = pop();
-        push(pop() - op2);
+        if(stack_odd()) {
+			push(-1 * op2);
+		} else {	
+			push(pop() - op2);
+		}
         break;
     case '/':
         op2 = pop();
@@ -44,9 +54,6 @@ main() /* reverse Polish desk calculator */
 			op2 = pop();
 			push(pop() % pop());
 			break;
-	case VAR:
-		store_var(atof(s));
-		break;
     case '=':
         printf("\t%f\n", push(pop()));
         break;
