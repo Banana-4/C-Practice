@@ -3,8 +3,8 @@
 
 #define MAXVAL 100 /* maximum depth of val stack */
 
-int sp = 0; /* stack pointer */
-double val[MAXVAL]; /* value stack */
+static int sp = 0; /* stack pointer */
+static double val[MAXVAL]; /* value stack */
 
 int inUse[26] = {0};
 double vars[26] {0};
