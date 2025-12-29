@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "memory.h"
+
 #define MAXVAL 100 /* maximum depth of val stack */
 
 int sp = 0; /* stack pointer */
@@ -35,6 +37,29 @@ clear() /* clear stack */
   sp = 0;
 }
 
-void store_val(char name,double f) {
-	
+
+
+void store_var(char name,double f) {
+	if (name >= 'a' && name <= 'z') {
+			int index = name - 'a';
+			vars[index] = f;
+			inUse[index] = 1;
+	} else {
+		printf("Variable names can only by single letters from a-z.\n");
+	}
+}
+
+int get_val(char name, double* val) {
+	if (name >= 'a' && name <= 'z') {
+		int index = name - 'a';
+		if (inUse[index]) {
+			*val = vars[index];
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int stack_odd() {
+	return sp % 2;
 }
