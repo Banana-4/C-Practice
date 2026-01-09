@@ -11,7 +11,7 @@
   An unsorted array of integers of length n.
 ## Solution:
   In a unsorted array the search space for a duplicate of any element is n - 1.
-  ### Method 1: Naive Brute Force
+  ### Method 1, Naive Brute Force:
     Use nested loop to compare each element with all next elments
     * The outside loop iterates from i = 0 to i == n - 1
     * The inner loop iterates from j = i to i - 1:
@@ -25,7 +25,7 @@
     
     This method is preferred when memory is limited and the array can't be sorted in place.
     
-  ### Method 2:
+  ### Method 2, Sort and Compare Adjacent Elements:
     In a sorted array, duplicate elements are next to each other.
     The search space is reduced to 1.
     Steps:
