@@ -23,7 +23,6 @@ struct pystring *append(struct pystring *s, char c) {
         if (!tmp) {
           return NULL;
       }
-      free(s->string);
       s->string = tmp;
   }
   s->string[s->len++] = c;
