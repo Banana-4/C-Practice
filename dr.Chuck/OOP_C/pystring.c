@@ -78,7 +78,7 @@ struct pystring *new_pystring() {
     return s;
 }
 
-struct pystring *assign_pystring(struct pystring *s, char *str) {
+struct pystring *assign_pystring(char *str) {
     s = new_pystring();
     if (!s)
         return NULL;
@@ -93,7 +93,7 @@ int main() {
     s1->appends(s1, "ello world!");
     dump(s1);
     s1->del(s1);
-    s1 = assign_pystring(s1, "A new Day!");
+    s1 = assign_pystring("A new Day!");
     dump(s1);
     s1->del(s1);
 }
