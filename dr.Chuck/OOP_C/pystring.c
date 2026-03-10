@@ -43,8 +43,9 @@ void del(struct pystring *s) {
 }
 
 struct pystring *appends(struct pystring *s, char *str) {
-  while (*str) {
-      s->append(s, *str++);
+    char c;   
+    while ((c = *str++)) {
+      s->append(s, c);
   }
   return s;
 }
