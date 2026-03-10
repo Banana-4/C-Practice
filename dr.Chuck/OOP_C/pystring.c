@@ -10,9 +10,8 @@ struct pystring {
     char *(*get)(struct pystring*, int);
     void (*del)(struct pystring *);
     struct pystring *(*appends) (struct pystring*, char*);
+
 };
-
-
 
 struct pystring *append(struct pystring *s, char c) {
   if (s == NULL)
@@ -75,12 +74,22 @@ struct pystring *new_pystring() {
     return s;
 }
 
+struct pystring *assign_pystring(struct pystring *s, char *str) {
+    s = new_pystring();
+    if (!s)
+        return NULL;
+    return s->appends(s, str);
+}
+
 
 int main() {
     struct pystring *s1 = new_pystring();
     s1->append(s1, 'H');
     dump(s1);
     s1->appends(s1, "ello world!");
+    dump(s1);
+    s1->del(s1);
+    s1 = assign_pystring(s1, "A new Day!");
     dump(s1);
     s1->del(s1);
 }
