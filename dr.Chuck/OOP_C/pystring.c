@@ -7,7 +7,7 @@ struct pystring {
     char *string;
 
     struct pystring *(*append) (struct pystring*, char);
-    char *(*get)(struct pystring*, int);
+    char (*get)(struct pystring*, int);
     void (*del)(struct pystring *);
     struct pystring *(*appends) (struct pystring*, char*);
 
@@ -29,9 +29,9 @@ struct pystring *append(struct pystring *s, char c) {
   return s;
 }
 
-char *get(struct pystring *s, int i) {
+char get(struct pystring *s, int i) {
   if (i > -1 && i < s->len) {
-      return &s->string[i];
+      return s->string[i];
   }
   return NULL;
 }
