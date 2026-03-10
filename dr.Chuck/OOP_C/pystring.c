@@ -19,10 +19,12 @@ struct pystring *append(struct pystring *s, char c) {
 
   if (s->len == s->size) {
       s->size *= 2;
-      s->string = realloc(s->string, s->size);
-        if (!s->string) {
+      char* tmp = realloc(s->string, s->size);
+        if (!tmp) {
           return NULL;
       }
+      free(s->string);
+      s->string = tmp;
   }
   s->string[s->len++] = c;
   s->string[s->len] = '\0';
