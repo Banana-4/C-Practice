@@ -9,11 +9,11 @@ int main() {
             putchar(TAB);
             putchar(TAB);
             putchar(TAB);
-        }
-        if (c == '\b') {
+        } else if (c == '\b') {
             putchar(BSPACE);
             putchar(BSPACE);
             putchar(BSPACE);
-        }
+        } else
+        putchar(c);
     }
 }
