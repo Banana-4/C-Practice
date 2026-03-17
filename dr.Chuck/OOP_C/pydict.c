@@ -63,14 +63,14 @@ dnode *insert_dnode(PYDICT *d, dnode *dn, char *key, char *val) {
       if (tmp) {
           free(dn->_value);
           dn->_value = tmp;
-          return dn;
       }
+      return dn;
+
   } else if (cmp > 0) {
       dn->_right = insert_dnode(d, dn->_right, key, val);
   } else {
       dn->_left = insert_dnode(d, dn->_left, key, val);
   }
-  d->size++;
   return dn;
 }
 
@@ -154,6 +154,22 @@ void remove_PYDICT(PYDICT *d, char *key) {
   d->size--;
 }
 
+char *get_dnode(dnode *dn, char *key) {
+  if (!dn)
+    return NULL;
+  int cmp = strcmp(key, dn->_key);
+  if (cmp == 0)
+    return dn->_value;
+  else if (cmp > 0)
+    return get_dnode(dn->_right, key);
+  else
+    return get_dnode(dn->_left, key);
+}
+
+char *get_PYDICT(PYDICT *d, char *key) {
+  return get_dnode(d->root, key);
+}
+
 void print_dnode(dnode *dn) {
   if (!dn)
     return;
@@ -169,6 +185,10 @@ void print_PYDICT(PYDICT *d) {
   printf("]\n");
 }
 
+size_t len_PYDICT(PYDICT *d) {
+  return d->size;
+}
+
 int main() {
   PYDICT *pd = new_PYDICT();
   insert_PYDICT(pd, "z", "Catch Phrase");
@@ -179,9 +199,9 @@ int main() {
   insert_PYDICT(pd, "c", "C");
   insert_PYDICT(pd, "a", "D");
   print_PYDICT(pd);
+  printf("Length = %zu\n", len_PYDICT(pd));
 
-
-
-
-
+  printf("z=%s\n", get_PYDICT(pd, "z"));
+  printf("x=%s\n", get_PYDICT(pd, "x"));
+  del_PYDICT(pd);
 }
