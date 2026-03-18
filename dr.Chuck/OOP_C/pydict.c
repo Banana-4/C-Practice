@@ -22,14 +22,18 @@ PYDICT *new_PYDICT() {
     d->size = 0;
     return d;
 }
+
+inline static void free_dnode(dnode* dn) {
+  free(dn->_key);
+  free(dn->_value);
+  free(dn);
+}
 void del_dnode(PYDICT *d, dnode *dn) {
     if (!dn)
         return;
     del_dnode(d, dn->_left);
     del_dnode(d, dn->_right);
-    free(dn->_key);
-    free(dn->_value);
-    free(dn);
+    free_dnode(dn);
     d->size--;
 }
 
@@ -102,9 +106,7 @@ void remove_PYDICT(PYDICT *d, char *key) {
     return;
 
   if (n == d->root && d->size == 1) {
-    free(n->_key);
-    free(n->_value);
-    free(n);
+    free_dnode(n);
     d->root = NULL;
     d->size = 0;
   }
@@ -113,27 +115,21 @@ void remove_PYDICT(PYDICT *d, char *key) {
   if (!n->_right && n->_left)  {
     par->_left == n ? (par->_left = n->_left) : (par->_right = n->_left);
     d->size--;
-    free(n->_key);
-    free(n->_value);
-    free(n);
+    free_dnode(n);
     return;
   }
 
   if (!n->_left && n->_right) {
     par->_left == n ? (par->_left = n->_right) : (par->_right = n->_right);
     d->size--;
-    free(n->_key);
-    free(n->_value);
-    free(n);
+    free_dnode(n);
     return;
   }
 
   if (!n->_left && !n->_right) {
     par->_left == n ? (par->_left = NULL) : (par->_right = NULL);
     d->size--;
-    free(n->_key);
-    free(n->_value);
-    free(n);
+    free_dnode(n);
     return;
   }
 
