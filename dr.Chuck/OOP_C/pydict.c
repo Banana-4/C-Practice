@@ -1,6 +1,10 @@
+#ifndef STDLIB_H
+#define STDLIB_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#endif
 
 typedef struct dnode  {
     char *__key;
@@ -12,36 +16,39 @@ typedef struct dnode  {
 typedef struct PYDICT {
     size_t __size;
     dnode *__root;
+
+  /*Interface*/
+  void (*insert)(struct PYDICT*, char*, char*);
+  char* (*get)(struct PYDICT*, char*);
+  bool (*remove)(struct PYDICT *, char *);
+  size_t (*len)(struct PYDICT*);
+  void (*print)(struct PYDICT*);
+  void (*del)(struct PYDICT*);
+
 }PYDICT;
 
-PYDICT *new_PYDICT() {
-    PYDICT *d = (PYDICT *)malloc(sizeof(PYDICT));
-    if (!d)
-        return NULL;
-    d->__root = NULL;
-    d->__size = 0;
-    return d;
-}
 
-inline static void free_dnode(dnode* dn) {
+
+static void __free_dnode(dnode* dn) {
   free(dn->__key);
   free(dn->__value);
   free(dn);
 }
-void del_dnode(PYDICT *d, dnode *dn) {
+static void __del_dnode(PYDICT *d, dnode *dn) {
     if (!dn)
         return;
-    del_dnode(d, dn->__left);
-    del_dnode(d, dn->__right);
-    free_dnode(dn);
+    __del_dnode(d, dn->__left);
+    __del_dnode(d, dn->__right);
+    __free_dnode(dn);
     d->__size--;
 }
 
-void del_PYDICT(PYDICT *d) {
-  del_dnode(d, d->__root);
+static void __del_PYDICT(PYDICT *d) {
+  __del_dnode(d, d->__root);
+  free(d);
 }
 
-dnode *insert_dnode(PYDICT *d, dnode *dn, char *key, char *val) {
+static dnode *__insert_dnode(PYDICT *d, dnode *dn, char *key, char *val) {
   if (!dn) {
       dn = malloc(sizeof(dnode));
       if (!dn)
@@ -71,22 +78,22 @@ dnode *insert_dnode(PYDICT *d, dnode *dn, char *key, char *val) {
       return dn;
 
   } else if (cmp > 0) {
-      dn->__right = insert_dnode(d, dn->__right, key, val);
+      dn->__right = __insert_dnode(d, dn->__right, key, val);
   } else {
-      dn->__left = insert_dnode(d, dn->__left, key, val);
+      dn->__left = __insert_dnode(d, dn->__left, key, val);
   }
   return dn;
 }
 
-void insert_PYDICT(PYDICT *d, char *key, char *val) {
-  d->__root = insert_dnode(d, d->__root, key, val);
+static void __insert_PYDICT(PYDICT *d, char *key, char *val) {
+  d->__root = __insert_dnode(d, d->__root, key, val);
 }
 
 
 
-void remove_PYDICT(PYDICT *d, char *key) {
+static bool __remove_PYDICT(PYDICT *d, char *key) {
   if (!d)
-    return;
+    return false;
 
   dnode *n = d->__root;
   dnode *par = n;
@@ -103,10 +110,10 @@ void remove_PYDICT(PYDICT *d, char *key) {
   }
 
   if (!n)
-    return;
+    return false;
 
   if (n == d->__root && d->__size == 1) {
-    free_dnode(n);
+    __free_dnode(n);
     d->__root = NULL;
     d->__size = 0;
   }
@@ -115,22 +122,22 @@ void remove_PYDICT(PYDICT *d, char *key) {
   if (!n->__right && n->__left)  {
     par->__left == n ? (par->__left = n->__left) : (par->__right = n->__left);
     d->__size--;
-    free_dnode(n);
-    return;
+    __free_dnode(n);
+    return true;
   }
 
   if (!n->__left && n->__right) {
     par->__left == n ? (par->__left = n->__right) : (par->__right = n->__right);
     d->__size--;
-    free_dnode(n);
-    return;
+    __free_dnode(n);
+    return true;
   }
 
   if (!n->__left && !n->__right) {
     par->__left == n ? (par->__left = NULL) : (par->__right = NULL);
     d->__size--;
-    free_dnode(n);
-    return;
+    __free_dnode(n);
+    return true;
   }
 
 
@@ -148,56 +155,74 @@ void remove_PYDICT(PYDICT *d, char *key) {
     par->__left = NULL;
   }
   d->__size--;
+  return true;
 }
 
-char *get_dnode(dnode *dn, char *key) {
+static char *__get_dnode(dnode *dn, char *key) {
   if (!dn)
     return NULL;
   int cmp = strcmp(key, dn->__key);
   if (cmp == 0)
     return dn->__value;
   else if (cmp > 0)
-    return get_dnode(dn->__right, key);
+    return __get_dnode(dn->__right, key);
   else
-    return get_dnode(dn->__left, key);
+    return __get_dnode(dn->__left, key);
 }
 
-char *get_PYDICT(PYDICT *d, char *key) {
-  return get_dnode(d->__root, key);
+static char *__get_PYDICT(PYDICT *d, char *key) {
+  return __get_dnode(d->__root, key);
 }
 
-void print_dnode(dnode *dn) {
+static void __print_dnode(dnode *dn) {
   if (!dn)
     return;
 
-  print_dnode(dn->__left);
+  __print_dnode(dn->__left);
   printf("'%s' : '%s' ", dn->__key, dn->__value);
-  print_dnode(dn->__right);
+  __print_dnode(dn->__right);
 }
 
-void print_PYDICT(PYDICT *d) {
+static void __print_PYDICT(PYDICT *d) {
   printf("[ ");
-  print_dnode(d->__root);
+  __print_dnode(d->__root);
   printf("]\n");
 }
 
-size_t len_PYDICT(PYDICT *d) {
+static size_t __len_PYDICT(PYDICT *d) {
   return d->__size;
+}
+
+PYDICT *new_PYDICT() {
+    PYDICT *d = (PYDICT *)malloc(sizeof(PYDICT));
+    if (!d)
+        return NULL;
+    d->__root = NULL;
+    d->__size = 0;
+    d->insert = &__insert_PYDICT;
+    d->get = &__get_PYDICT;
+    d->remove = &__remove_PYDICT;
+    d->len = &__len_PYDICT;
+    d->print = &__print_PYDICT;
+    d->del = &__del_PYDICT;
+
+    return d;
 }
 
 int main() {
   PYDICT *pd = new_PYDICT();
-  insert_PYDICT(pd, "z", "Catch Phrase");
-  print_PYDICT(pd);
-  insert_PYDICT(pd, "z", "W");
-  print_PYDICT(pd);
-  insert_PYDICT(pd, "y", "B");
-  insert_PYDICT(pd, "c", "C");
-  insert_PYDICT(pd, "a", "D");
-  print_PYDICT(pd);
-  printf("Length = %zu\n", len_PYDICT(pd));
+  pd->insert(pd, "z", "Catch Phrase");
+  
+  pd->print(pd);
+  pd->insert(pd, "z", "W");
+  pd->print(pd);
+  pd->insert(pd, "y", "B");
+  pd->insert(pd, "c", "C");
+  pd->insert(pd, "a", "D");
+  pd->print(pd);
+  printf("Length = %zu\n", pd->len(pd));
 
-  printf("z=%s\n", get_PYDICT(pd, "z"));
-  printf("x=%s\n", get_PYDICT(pd, "x"));
-  del_PYDICT(pd);
+  printf("z=%s\n", pd->get(pd, "z"));
+  printf("x=%s\n", pd->get(pd, "x"));
+  pd->del(pd);
 }
