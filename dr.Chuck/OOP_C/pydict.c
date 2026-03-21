@@ -35,7 +35,7 @@ static void __free_dnode(dnode* dn) {
   free(dn);
 }
 static void __del_dnode(PYDICT *d, dnode *dn) {
-    if (!dn)
+  if (!dn)
         return;
     __del_dnode(d, dn->__left);
     __del_dnode(d, dn->__right);
@@ -44,6 +44,8 @@ static void __del_dnode(PYDICT *d, dnode *dn) {
 }
 
 static void __del_PYDICT(PYDICT *d) {
+  if (!d)
+    return;
   __del_dnode(d, d->__root);
   free(d);
 }
@@ -90,88 +92,46 @@ static void __insert_PYDICT(PYDICT *d, char *key, char *val) {
 }
 
 
+static dnode *__find_dnode(dnode *root, char *key) {
+  if (!root)
+    return NULL;
+  int cmp = strcmp(key, root->__key);
+  if (cmp == 0)
+    return root;
+  else if (cmp < 0)
+    return __find_dnode(root->__left, key);
+  else
+    return __find_dnode(root->__right, key);
+}
+
+dnode *__remove_dnode(dnode *n) {
+
+}
 
 static bool __remove_PYDICT(PYDICT *d, char *key) {
   if (!d)
     return false;
 
-  dnode *n = d->__root;
-  dnode *par = n;
-
-  while (n) {
-    int cmp = strcmp(key, n->__key);
-    if (cmp == 0)
-      break;
-    par = n;
-    if (cmp > 0)
-      n = n->__right;
-    else
-      n = n->__left;
-  }
-
+  dnode *n = __find_dnode(d->__root, key);
   if (!n)
     return false;
 
   if (n == d->__root && d->__size == 1) {
     __free_dnode(n);
-    d->__root = NULL;
     d->__size = 0;
-  }
-
-
-  if (!n->__right && n->__left)  {
-    par->__left == n ? (par->__left = n->__left) : (par->__right = n->__left);
-    d->__size--;
-    __free_dnode(n);
+    d->__root = NULL;
     return true;
   }
 
-  if (!n->__left && n->__right) {
-    par->__left == n ? (par->__left = n->__right) : (par->__right = n->__right);
-    d->__size--;
-    __free_dnode(n);
-    return true;
-  }
+  __remove_dnode(n);
 
-  if (!n->__left && !n->__right) {
-    par->__left == n ? (par->__left = NULL) : (par->__right = NULL);
-    d->__size--;
-    __free_dnode(n);
-    return true;
-  }
-
-
-  dnode *r = n->__right;
-  while (r->__left) {
-    par = r;
-    r = r->__left;
-  }
-  free(n->__key);
-  free(n->__value);
-  n->__key = r->__key;
-  n->__value = r->__value;
-  free(r);
-  if (r != n->__right) {
-    par->__left = NULL;
-  }
-  d->__size--;
   return true;
 }
 
-static char *__get_dnode(dnode *dn, char *key) {
-  if (!dn)
-    return NULL;
-  int cmp = strcmp(key, dn->__key);
-  if (cmp == 0)
-    return dn->__value;
-  else if (cmp > 0)
-    return __get_dnode(dn->__right, key);
-  else
-    return __get_dnode(dn->__left, key);
-}
 
 static char *__get_PYDICT(PYDICT *d, char *key) {
-  return __get_dnode(d->__root, key);
+  dnode *n = __find_dnode(d->__root, key);
+  return n ? n->__value : NULL;
 }
 
 static void __print_dnode(dnode *dn) {
