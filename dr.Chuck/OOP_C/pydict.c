@@ -104,27 +104,117 @@ static dnode *__find_dnode(dnode *root, char *key) {
     return __find_dnode(root->__right, key);
 }
 
-dnode *__remove_dnode(dnode *n) {
+ void __remove_dnode(dnode *n, dnode *p) {
+
+
+
+   if (!n->__left && !n->__right) {
+     p->__left == n ? (p->__left = NULL) : (p->__right = NULL);
+     __free_dnode(n);
+   }
+
+   if (n->__left && !n->__right) {
+     p->__left == n ? (p->__left = n->__left) : (p->__right = n->__left);
+     __free_dnode(n);
+   }
+
+   if (!n->__left && n->__right) {
+     p->__left == n ? (p->__left = n->__right) : (p->__right = n->__right);
+     __free_dnode(n);
+   }
+
+   dnode *par = n;
+   dnode *c = n->__right;
+
+   while (c->__left) {
+     par = c;
+     c = c->__left;
+   }
+   free(n->__key);
+   free(n->__value);
+   n->__key = c->__key;
+   n->__value = c->__value;
+
+   if (!c->__right) {
+     par->__left == c ? (par->__left = NULL) : (par->__right = NULL);
+     free(c);
+   } else {
+     par->__left = c ? (par->__left = c->__right) : (par->__right = c->__right);
+     free(c);
+   }
 
 }
+
+
 
 static bool __remove_PYDICT(PYDICT *d, char *key) {
   if (!d)
     return false;
-
-  dnode *n = __find_dnode(d->__root, key);
+  dnode *n = d->__root;
+  dnode *p = n;
+  int cmp;
+  while (n && ((cmp = strcmp(key, n->__key)) != 0)) {
+    p = n;
+    if (cmp < 0)
+      n = n->__left;
+    else
+      n = n->__right;
+  }
   if (!n)
     return false;
 
-  if (n == d->__root && d->__size == 1) {
-    __free_dnode(n);
-    d->__size = 0;
-    d->__root = NULL;
+  if (!n->__left && !n->__right) {
+    if (n == d->__root) {
+      d->__root = NULL;
+      d->__size = 0;
+      return true;
+    } else {
+      p->__left == n ? (p->__left = NULL) : (p->__right = NULL);
+      __free_dnode(n);
+    }
     return true;
+   }
+
+  if (n->__left && !n->__right) {
+    if (n == d->__root) {
+      d->__root = d->__root->__left;
+      d->__size--;
+    } else {
+      p->__left == n ? (p->__left = n->__left) : (p->__right = n->__left);
+      __free_dnode(n);
+    }
+    return true;
+   }
+
+  if (!n->__left && n->__right) {
+    if (n == d->__root) {
+      d->__root = d->__root->__right;
+      d->__size--;
+    } else {
+     p->__left == n ? (p->__left = n->__right) : (p->__right = n->__right);
+     __free_dnode(n);
+    }
+    return true;
+   }
+
+  dnode *par = n;
+  dnode *c = n->__right;
+
+  while (c->__left) {
+    par = c;
+    c = c->__left;
   }
+  free(n->__key);
+  free(n->__value);
+  n->__key = c->__key;
+  n->__value = c->__value;
 
-  __remove_dnode(n);
-
+  if (!c->__right)
+    par->__left == c ? (par->__left = NULL) : (par->__right = NULL);
+  else
+    par->__left = c ? (par->__left = c->__right) : (par->__right = c->__right);
+  free(c);
+  d->__size--;
   return true;
 }
 
