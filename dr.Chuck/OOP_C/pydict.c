@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #endif
-
+typedef struct Iter_dict Iter_dict;
 typedef struct dnode  {
     char *__key;
     char *__value;
@@ -21,19 +21,19 @@ typedef struct PYDICT {
   void (*insert)(struct PYDICT*, char*, char*);
   char* (*get)(struct PYDICT*, char*);
   bool (*remove)(struct PYDICT *, char *);
-  size_t (*len)(struct PYDICT*);
+  size_t (*len)(struct PYDICT *);
+  Iter_dict *(*iter)(struct PYDICT*);
   void (*print)(struct PYDICT*);
   void (*del)(struct PYDICT*);
 
 }PYDICT;
-
-
 
 static void __free_dnode(dnode* dn) {
   free(dn->__key);
   free(dn->__value);
   free(dn);
 }
+
 static void __del_dnode(PYDICT *d, dnode *dn) {
   if (!dn)
         return;
@@ -145,8 +145,6 @@ static dnode *__find_dnode(dnode *root, char *key) {
 
 }
 
-
-
 static bool __remove_PYDICT(PYDICT *d, char *key) {
   if (!d)
     return false;
@@ -243,6 +241,130 @@ static size_t __len_PYDICT(PYDICT *d) {
   return d->__size;
 }
 
+
+
+typedef struct list_node {
+  dnode *val;
+  struct list_node *next;
+}list_node;
+
+typedef struct list {
+  struct list_node *head;
+  struct list_node *tail;
+  size_t size;
+}list;
+
+list *new_list() {
+  list *l = (list*) malloc(sizeof(list));
+  if(!l)
+    return NULL;
+  l->size = 0;
+  l->head = NULL;
+  l->tail = NULL;
+  return l;
+}
+
+void append_list(list *l, dnode *val) {
+  if(!l)
+    return;
+  list_node *node = (list_node*)malloc(sizeof(list_node));
+  if (!node)
+    return;
+
+  if(l->size == 0) {
+    node->val = val;
+    node->next = NULL;
+    l->head = l->tail = node;
+  } else {
+    l->tail->next = node;
+    l->tail = node;
+  }
+  l->size++;
+}
+
+dnode *popf_list(list *l) {
+  if(!l || l->size == 0)
+    return NULL;
+  dnode *val = l->head->val;
+  list_node *last_head= l->head;
+  l->head = l->head->next;
+  l->size--;
+  free(last_head);
+  return val; 
+}
+
+
+struct Iter_dict {
+  list *__stack;
+
+  char *(*get_key)(struct Iter_dict*);
+  char *(*get_val) (struct Iter_dict*);
+  void (*next)(struct Iter_dict*);
+  bool (*valid)(struct Iter_dict*);
+  void (*del)(struct Iter_dict *);
+
+};
+
+static char *__get_key(Iter_dict *it) {
+  if (!it)
+    return NULL;
+  if (it->__stack->size > 0) {
+    return it->__stack->head->val->__key;
+  } else 
+  return NULL;
+}
+
+static char *__get_val(Iter_dict *it) {
+  if (!it)
+    return NULL;
+  if (it->__stack->size > 0) {
+    return it->__stack->head->val->__value;
+  } else 
+  return NULL;
+}
+
+static void __next_iter(Iter_dict *it) {
+  if(!it)
+    return;
+  dnode *last = popf_list(it->__stack);
+  if (last == NULL)
+    return;
+  if (last->__left)
+    append_list(it->__stack, last->__left);
+  if (last->__right)
+    append_list(it->__stack, last->__right);
+}
+
+static bool __valid_iter(Iter_dict *it) {
+  bool v = (it->__stack->size > 0);
+  return v;
+}
+
+static void __del_iter(Iter_dict *it) {
+  while (it->__stack->size > 0)
+    popf_list(it->__stack);
+  free(it);
+  it = NULL;
+}
+
+Iter_dict *__new_iter(PYDICT *d) {
+  if (!d)
+    return NULL;
+  Iter_dict *it = (Iter_dict *)malloc(sizeof(Iter_dict));
+  if (!it)
+    return NULL;
+  it->__stack = new_list();
+  if (d->__size == 0)
+    return NULL;
+  append_list(it->__stack, d->__root);
+  it->del = &__del_iter;
+  it->get_key = &__get_key;
+  it->get_val = &__get_val;
+  it->next = &__next_iter;
+  it->valid = &__valid_iter;
+  return it;
+}
+
 PYDICT *new_PYDICT() {
     PYDICT *d = (PYDICT *)malloc(sizeof(PYDICT));
     if (!d)
@@ -255,7 +377,7 @@ PYDICT *new_PYDICT() {
     d->len = &__len_PYDICT;
     d->print = &__print_PYDICT;
     d->del = &__del_PYDICT;
-
+    d->iter = &__new_iter;
     return d;
 }
 
@@ -274,5 +396,12 @@ int main() {
 
   printf("z=%s\n", pd->get(pd, "z"));
   printf("x=%s\n", pd->get(pd, "x"));
+  Iter_dict *it = pd->iter(pd);
+  if (it)
+    while (it->valid(it)) {
+      printf("Node: %s - %s\n", it->get_key(it), it->get_val(it));
+      it->next(it);
+    }
+  it->del(it);
   pd->del(pd);
 }
