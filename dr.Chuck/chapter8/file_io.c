@@ -1,4 +1,5 @@
 
+#include <stdlib.h>
 #define _BUFFSIZE 512
 #define _NFILES 20
 
@@ -94,17 +95,17 @@ FILE *fopen(const char *name, const char *mode) {
 int _fillbuf(FILE *fp) {
   static char smallbuf[_NFILES];
 
-  if ((fp->_flag._READ || fp->_flag._EOF || fp->_flag._ERR)
-    return (EOF);
+  if (!fp->_flag._READ || fp->_flag._EOF || fp->_flag._ERR)
+    return EOF;
   while (fp->_base == NULL) /* find buffer space */
-    if (fp->_flag._UNBUF) /* unbuffered */
+    if (fp->_flag._UNBUF)   /* unbuffered */
       fp->_base = &smallbuf[fp->_fd];
-    else if ((fp->_base = calloc(_BUFSIZE, 1)) == NULL)
+    else if ((fp->_base = calloc(_BUFFSIZE, 1)) == NULL)
       fp->_flag._UNBUF = 1; /* can't get big buf */
     else
       fp->_flag._BIGBUF = 1; /* got big one */
   fp->_bp = fp->_base;
-  fp->_cnt = read(fp->_fd, fp->_bp, fp->_flag._UNBUF ? 1 : _BUFSIZE);
+  fp->_cnt = read(fp->_fd, fp->_bp, fp->_flag._UNBUF ? 1 : _BUFFSIZE);
   if (--fp->_cnt < 0) {
     if (fp->_cnt == -1)
       fp->_flag._EOF = 1;
@@ -114,4 +115,69 @@ int _fillbuf(FILE *fp) {
     return (EOF);
   }
   return (*fp->_bp++);
+}
+
+int _flushbuf(FILE *fp, int c) {
+
+  static char smallbuf[_NFILES];
+  if (!fp->_flag._WRITE || fp->_flag._ERR)
+    return EOF; // not ideal but it does say nothing more can be writen to the
+                // file
+
+  // write data to file
+  int amount = fp->_bp - fp->_base;
+  if (write(fp->_fd, fp->_base, amount) != amount) {
+    fp->_flag._ERR = 1;
+    return EOF;
+  }
+
+  while (fp->_base == NULL) {
+    if (fp->_flag._UNBUF)
+      fp->_base = &smallbuf[fp->_fd];
+    else if ((fp->_base = calloc(_BUFFSIZE, 1)) == NULL) {
+      fp->_flag._UNBUF = 1;
+      fp->_cnt = 1;
+    } else {
+      fp->_flag._BIGBUF = 1;
+      fp->_cnt = _BUFFSIZE;
+    }
+  }
+  fp->_bp = fp->_base;
+  *fp->_bp++ = c;
+  --fp->_cnt;
+  return c;
+}
+
+void fclose(FILE *fp) {
+  if (fp->_flag._WRITE) {
+    _flushbuf(fp, '\0');
+  }
+  if (fp->_flag._BIGBUF)
+    free(fp->_base);
+  fp->_base = NULL;
+  fp->_bp = NULL;
+  fp->_cnt = 0;
+  fp->_flag._READ = 0;
+  fp->_flag._BIGBUF = 0;
+  fp->_flag._EOF = 0;
+  fp->_flag._ERR = 0;
+  fp->_flag._UNBUF = 0;
+  fp->_flag._WRITE = 0;
+  close(fp->_fd);
+}
+
+void fseek(FILE *fp, long offset, int origin) {
+  if (fp->_flag._WRITE) {
+    if (write(fp->_fd, fp->_base, fp->_bp - fp->_base) != fp->_bp - fp->_base) {
+      fp->_flag._ERR = 1;
+      return;
+    }
+  }
+
+  if (fp->_flag._READ && origin == 1) {
+    offset -= fp->_cnt;
+  }
+  lseek(fp->_fd, offset, origin);
+  fp->_cnt = 0;
+  fp->_bp = fp->_base;
 }
