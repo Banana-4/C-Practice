@@ -18,7 +18,7 @@ size_t get_line(char *line, size_t limit) {
 }
 
 size_t strip(char *line, size_t len) {
-    if (len <= 0 || !line) {
+    if (len == 0 || !line) {
         return 0;
     }
     
