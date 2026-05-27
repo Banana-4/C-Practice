@@ -33,14 +33,15 @@ int get_line() /* specialized version */
     for (i = 0; i < MAXLINE-1; ++i)
     {
        if((c = getchar()) == EOF) {
-            break;
+           line[i] = '\0';
+           break;
        }
        line[i] = c;
        if (c == '\n') {
+           line[++i] = '\0';
            break;
        }
     }
-    line[++i] = '\0';
     return(i);
 }
 
