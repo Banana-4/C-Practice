@@ -17,7 +17,7 @@ String *create_str(size_t size)
         return str;
 }
 
-bool str_grow(const String *s)
+bool str_grow(String *s)
 {
     if (!s)
         return false;
@@ -27,20 +27,23 @@ bool str_grow(const String *s)
         return false;
     s->size = s->size * F;
     memcpy(str,s->str, s->len + 1);
+    free(s->str);
+    s->str = str;
     return true;
 }
 
-void str_append(String *s, const char ch)
+bool str_append(String *s, const char ch)
 {
     if (!s)
-        return;
-    if(str->len + 1 == str->size - 1)
+        return false;
+    if(s->len + 1 == s->size)
     {
         if(!str_grow(s))
-            return;
+            return false;
     }
-    s->str[str->len++] = ch;
-    s->str[str->len] == '\0';
+    s->str[s->len++] = ch;
+    s->str[s->len] = '\0';
+    return true;
 }
 
 size_t str_len(const String *s)
@@ -48,7 +51,7 @@ size_t str_len(const String *s)
     return (s ? s->len : 0);
 }
 
-const char *str(const String *s)
+const char *get_text(const String *s)
 {
     return (s ? s->str : NULL);
 }

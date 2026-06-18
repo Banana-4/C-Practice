@@ -29,18 +29,26 @@ void list_append(List* l, String* s)
         l->head = l->tail = n;
     }
 }
-
-void list_destroy(List &l)
+void list_print(const List *l)
+{
+    Node *n = l->head;
+    while(n)
+    {
+        printf("%s", get_text(n->line));
+        n = n->next;
+    }
+}
+void list_delete(List *l)
 {
     if (!l)
         return;
     Node *n = l->head;
-    while(n)
+    while(n != NULL)
     {
-        str_destroy(n->line);
         Node *done = n;
         n = n->next;
-        free(rem)
+        str_delete(done->line);
+        free(done);
     }
     free(l);
 }
